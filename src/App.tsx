@@ -1,4 +1,5 @@
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useParams } from 'react-router-dom';
 import { useQuery } from 'react-query';
 
 const fetchEvents = async () => {
@@ -16,8 +17,6 @@ const fetchEvents = async () => {
   return eventsArray;
 };
 
-
-
 const EventList = () => {
   const { data: events, isLoading, error } = useQuery('events', fetchEvents);
 
@@ -34,7 +33,9 @@ const EventList = () => {
       <h2>All Events</h2>
       {events.map((event: any) => (
         <div key={event.id}>
-          <h3>{event.title}</h3>
+          <h3>
+            <Link to={`/event/${event.id}`}>{event.title}</Link>
+          </h3>
           <p>{event.description}</p>
         </div>
       ))}
@@ -42,11 +43,9 @@ const EventList = () => {
   );
 };
 
-const EventDetail = ({ eventId }: { eventId: number }) => {
-  const { data: event, isLoading, error } = useQuery(
-    ['event', eventId],
-    () => fetchEvents().then((events) => events.find((e: any) => e.id === eventId))
-  );
+const EventDetail = () => {
+  const { id: eventId } = useParams();
+  const { data: events, isLoading, error } = useQuery('events', fetchEvents);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -55,6 +54,8 @@ const EventDetail = ({ eventId }: { eventId: number }) => {
   if (error) {
     return <div>Error: {error.message}</div>;
   }
+
+  const event = events.find((e: any) => e.id === parseInt(eventId));
 
   if (!event) {
     return <div>Event not found</div>;
@@ -71,10 +72,12 @@ const EventDetail = ({ eventId }: { eventId: number }) => {
 
 const App = () => {
   return (
-    <div>
-      <EventList />
-      <EventDetail eventId={123} />
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<EventList />} />
+        <Route path="/event/:id" element={<EventDetail />} />
+      </Routes>
+    </Router>
   );
 };
 
