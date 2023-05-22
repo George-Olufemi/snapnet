@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
+import { css } from '@emotion/react';
+import { BounceLoader } from 'react-spinners';
 
 const fetchEvents = async () => {
   const response = await fetch(
@@ -17,19 +19,22 @@ const fetchEvents = async () => {
   return eventsArray;
 };
 
+const override = css`
+  display: block;
+  margin: 0 auto;
+  margin-top: 20px;
+`;
+
 const EventList = () => {
   const [page, setPage] = useState(1);
   const [petsAllowed, setPetsAllowed] = useState(false);
 
   const { data: events, isLoading, error } = useQuery(['events', page, petsAllowed], () =>
     fetchEvents().then((events) => {
-      // Apply pagination
       const itemsPerPage = 3;
       const startIndex = (page - 1) * itemsPerPage;
       const endIndex = startIndex + itemsPerPage;
       const paginatedEvents = events.slice(startIndex, endIndex);
-
-      // Apply petsAllowed filter
       const filteredEvents = petsAllowed
         ? paginatedEvents.filter((event) => event.petsAllowed)
         : paginatedEvents;
@@ -52,42 +57,56 @@ const EventList = () => {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="bg-white p-4 h-screen text-center">
+        <BounceLoader color="#646cff" css={override} size={60} />
+      </div>
+    );
   }
 
   if (error) {
-    return <div>Error: {error.message}</div>;
+    return <div className="bg-white p-4 shadow h-screen">Error: {error.message}</div>;
   }
 
   return (
-    <div>
-      <h2>All Events</h2>
-      <label>
-        Pets Allowed
+    <div className="bg-white p-4 h-screen">
+      <h2 className="text-2xl font-bold mb-4">All Events</h2>
+      <label className="flex items-center mb-2">
         <input
           type="checkbox"
+          className="mr-2"
           checked={petsAllowed}
           onChange={handleFilterChange}
         />
+        Pets Allowed
       </label>
-      {events.map((event) => (
-        <div key={event.id}>
-          <h3>
-            <Link to={`/event/${event.id}`}>{event.title}</Link>
-          </h3>
-          <p>{event.description}</p>
-        </div>
-      ))}
-      <div>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {events.map((event) => (
+          <div key={event.id} className="p-4 border border-gray-300 rounded-lg shadow">
+            <h3 className="text-xl font-bold mb-2">
+              <Link
+                to={`/event/${event.id}`}
+                className="text-indigo-600 border-b border-indigo-600"
+              >
+                {event.title}
+              </Link>
+            </h3>
+            <p>{event.description}</p>
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-between mt-4">
         <button
           disabled={page === 1}
           onClick={() => handlePageChange(page - 1)}
+          className="px-4 py-2 rounded bg-indigo-600 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           Previous Page
         </button>
         <button
           disabled={events.length < 3}
           onClick={() => handlePageChange(page + 1)}
+          className="px-4 py-2 rounded bg-indigo-600 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           Next Page
         </button>
@@ -97,27 +116,31 @@ const EventList = () => {
 };
 
 const EventDetail = () => {
-  const { id: eventId } = useParams();
-  const { data: events, isLoading, error } = useQuery('events', fetchEvents);
+  const { id } = useParams();
+  const { data: event, isLoading, error } = useQuery(['event', id], () =>
+    fetchEvents().then((events) => events.find((e) => e.id.toString() === id))
+  );
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="bg-white p-4 shadow text-center h-screen">
+        <BounceLoader color="#646cff" css={override} size={60} />
+      </div>
+    );
   }
 
   if (error) {
-    return <div>Error: {error.message}</div>;
+    return <div className="bg-white p-4 h-screen">Error: {error.message}</div>;
   }
 
-  const event = events.find((e) => e.id === parseInt(eventId));
-
   if (!event) {
-    return <div>Event not found</div>;
+    return <div className="bg-white p-4 h-screen">Event not found</div>;
   }
 
   return (
-    <div>
-      <h2>Event Details</h2>
-      <h3>{event.title}</h3>
+    <div className="bg-white p-4 h-screen">
+      <h2 className="text-2xl font-bold mb-4">Event Details</h2>
+      <h3 className="text-xl font-bold mb-2">{event.title}</h3>
       <p>{event.description}</p>
     </div>
   );
