@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState, ChangeEvent } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
-import { css } from '@emotion/react';
+// import { css, SerializedStyles } from '@emotion/react';
 import { BounceLoader } from 'react-spinners';
 
 const fetchEvents = async () => {
@@ -10,7 +10,7 @@ const fetchEvents = async () => {
   );
   const data = await response.json();
 
-  let eventsArray = Array.isArray(data) ? data : [data];
+  const eventsArray = Array.isArray(data) ? data : [data];
 
   if (!Array.isArray(eventsArray)) {
     throw new Error('Invalid response format');
@@ -19,24 +19,24 @@ const fetchEvents = async () => {
   return eventsArray;
 };
 
-const override = css`
-  display: block;
-  margin: 0 auto;
-  margin-top: 20px;
-`;
+// const override: SerializedStyles = css`
+//   display: block;
+//   margin: 0 auto;
+//   margin-top: 20px;
+// `;
 
 const EventList = () => {
-  const [page, setPage] = useState(1);
-  const [petsAllowed, setPetsAllowed] = useState(false);
+  const [page, setPage] = useState<number>(1);
+  const [petsAllowed, setPetsAllowed] = useState<boolean>(false);
 
-  const { data: events, isLoading, error } = useQuery(['events', page, petsAllowed], () =>
+  const { data: events, isLoading, error } = useQuery<any, Error>(['events', page, petsAllowed], () =>
     fetchEvents().then((events) => {
       const itemsPerPage = 3;
       const startIndex = (page - 1) * itemsPerPage;
       const endIndex = startIndex + itemsPerPage;
       const paginatedEvents = events.slice(startIndex, endIndex);
       const filteredEvents = petsAllowed
-        ? paginatedEvents.filter((event) => event.petsAllowed)
+        ? paginatedEvents.filter((event: any) => event.petsAllowed)
         : paginatedEvents;
 
       return filteredEvents;
@@ -45,12 +45,12 @@ const EventList = () => {
 
   const navigate = useNavigate();
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     setPage(newPage);
     navigate(`?page=${newPage}`, { replace: true });
   };
 
-  const handleFilterChange = (event) => {
+  const handleFilterChange = (event: ChangeEvent<HTMLInputElement>) => {
     setPetsAllowed(event.target.checked);
     setPage(1);
     navigate(`?page=1`, { replace: true });
@@ -59,7 +59,7 @@ const EventList = () => {
   if (isLoading) {
     return (
       <div className="bg-white p-4 h-screen text-center">
-        <BounceLoader color="#646cff" css={override} size={60} />
+        <BounceLoader color="#646cff" size={60} />
       </div>
     );
   }
@@ -81,7 +81,7 @@ const EventList = () => {
         Pets Allowed
       </label>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {events.map((event) => (
+        {events.map((event: any) => (
           <div key={event.id} className="p-4 border border-gray-300 rounded-lg shadow">
             <h3 className="text-xl font-bold mb-2">
               <Link
@@ -117,14 +117,14 @@ const EventList = () => {
 
 const EventDetail = () => {
   const { id } = useParams();
-  const { data: event, isLoading, error } = useQuery(['event', id], () =>
-    fetchEvents().then((events) => events.find((e) => e.id.toString() === id))
+  const { data: event, isLoading, error } = useQuery<any, Error>(['event', id], () =>
+    fetchEvents().then((events) => events.find((e: any) => e.id.toString() === id))
   );
 
   if (isLoading) {
     return (
       <div className="bg-white p-4 shadow text-center h-screen">
-        <BounceLoader color="#646cff" css={override} size={60} />
+        <BounceLoader color="#646cff" size={60} />
       </div>
     );
   }
